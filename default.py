@@ -271,7 +271,10 @@ def catchupEvent(args):
     variables = {"input": {"eventId": event_id, "replaceSessionId": None}}
     res = client.execute(open(resources_path + '/catchupEvent.graphql').read(), variables)
     xbmcaddon.Addon(id='plugin.video.mtelnow').setSetting('settings_playback_session_id', res['data']['catchupEvent']['playbackInfo']['sessionId'])
-    playPath(res['data']['catchupEvent']['playbackInfo']['url'])
+    StartOffset=0
+    if 'event' in res['data']['catchupEvent']['playbackInfo'] and 'startOverTVBeforeTime' in res['data']['catchupEvent']['playbackInfo']['event']:
+        StartOffset = res['data']['catchupEvent']['playbackInfo']['event']['startOverTVBeforeTime']
+    playPath(res['data']['catchupEvent']['playbackInfo']['url'], StartOffset=StartOffset)
      
 # За теб секцията. Не е довършена, защото няма play
 def indexVOD():
@@ -316,7 +319,7 @@ def indexVODFolder(args):
                 plot=plot
         )
 
-def playPath(path, title = "", plot=""):
+def playPath(path, title = "", plot="", StartOffset=0):
     PROTOCOL = 'mpd'
     DRM = 'com.widevine.alpha'
 
@@ -329,6 +332,7 @@ def playPath(path, title = "", plot=""):
         else:
             li.setProperty('inputstream', is_helper.inputstream_addon)
         li.setProperty('inputstream.adaptive.manifest_type', PROTOCOL)
+        li.setProperty('StartOffset', str(StartOffset))
         li.setProperty('inputstream.adaptive.license_type', DRM)
         if max_bandwidth:
           li.setProperty('inputstream.adaptive.max_bandwidth', max_bandwidth)
@@ -342,7 +346,8 @@ def playPath(path, title = "", plot=""):
         if title and plot:
             li.setInfo( type="Video", infoLabels={ "Title": title, "plot": plot})
         try:
-            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, li)
+            xbmc.Player().play(path, li)
+            #xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, li)
         except:
             xbmc.executebuiltin("Notification('Грешка','Видеото липсва на сървъра!')")
  
