@@ -3,13 +3,18 @@
 	<!-- User Entries -->
 	<category label="1000">
         <setting id="sep1" label="1000" type="lsep"/>
-        <setting label="E-mail" type="text" id="settings_username" default=""/>
-        <setting label="Password" type="text" id="settings_password" default="" option="hidden" enable="!eq(-1,)"/>
-        <setting label="Max. Bandwidth (Bit/s)" id="settings_max_bandwidth" type="number" default=""/>
-        <setting label="Adult" type="bool" id="settings_adult" default="True"/>
+        <setting id="settings_username" label="E-mail" type="text" default=""/>
+        <setting id="settings_password" label="Password" type="text" default="" option="hidden" enable="!eq(-1,)"/>
+        <setting id="settings_max_bandwidth" label="Max. Bandwidth (Bit/s)" type="number" default=""/>
+        <setting id="settings_adult" label="Adult" type="bool" default="True"/>
         <setting id="settings_user_id" type="number" default="" visible="False"/>
         <setting id="settings_session_id" type="text" default="" visible="False"/>
         <setting id="settings_playback_session_id" type="text" defaults="" visible="False"/>
         <setting id="settings_device_id" type="text" defaults="" visible="False"/>
+    </category>
+    <category id="expert" label="Expert">
+        <setting id="sep2" label="Expert" type="lsep"><level>3</level></setting>
+        <setting id="play_prefix_enabled" label="Използване на междинен сървър" type="bool" defaults="False"><level>3</level></setting>
+        <setting id="play_prefix" label="Междинен сървър" type="text" defaults=""><level>3</level></setting>
     </category>
 </settings>

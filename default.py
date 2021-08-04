@@ -320,6 +320,9 @@ def indexVODFolder(args):
         )
 
 def playPath(path, title = "", plot="", StartOffset=0):
+    play_prefix = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('play_prefix')
+    if xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('play_prefix_enabled') and play_prefix:
+        path=play_prefix.rstrip('/') + '/' + path
     PROTOCOL = 'mpd'
     DRM = 'com.widevine.alpha'
 
@@ -346,8 +349,8 @@ def playPath(path, title = "", plot="", StartOffset=0):
         if title and plot:
             li.setInfo( type="Video", infoLabels={ "Title": title, "plot": plot})
         try:
-            xbmc.Player().play(path, li)
-            #xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, li)
+            #xbmc.Player().play(path, li)
+            xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, li)
         except:
             xbmc.executebuiltin("Notification('Грешка','Видеото липсва на сървъра!')")
  
