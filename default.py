@@ -321,7 +321,7 @@ def indexVODFolder(args):
 
 def playPath(path, title = "", plot="", StartOffset=0):
     play_prefix = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('play_prefix')
-    if xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('play_prefix_enabled') and play_prefix:
+    if xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('play_prefix_enabled') == "true" and play_prefix:
         path=play_prefix.rstrip('/') + '/' + path
     PROTOCOL = 'mpd'
     DRM = 'com.widevine.alpha'
