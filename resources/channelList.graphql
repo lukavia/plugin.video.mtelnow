@@ -148,14 +148,6 @@ fragment eventInfoBasicFragment on Event {
   __typename
 }
 
-fragment imageFragment on Image {
-  ...cacheInfoFragment
-  url
-  width
-  height
-  __typename
-}
-
 fragment parentalRatingFragment on ParentalRating {
   ...cacheInfoFragment
   title
