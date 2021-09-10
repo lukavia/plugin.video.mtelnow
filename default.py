@@ -16,6 +16,7 @@ import base64
 import inputstreamhelper
 from common import *
 import time
+import traceback
 
 base_url = sys.argv[0]
 addon_handle = int(sys.argv[1])
@@ -257,7 +258,8 @@ def PlayChannel(args):
     variables = {"input": {"channelId": channel_id, "replaceSessionId": None}}
     res = client.execute(open(resources_path + '/playChannel.graphql').read(), variables)
     xbmcaddon.Addon(id='plugin.video.mtelnow').setSetting('settings_playback_session_id', res['data']['playChannel']['playbackInfo']['sessionId'])
-    playPath(res['data']['playChannel']['playbackInfo']['url'])
+    playPath(res['data']['playChannel']['playbackInfo']['url'], 
+                heartbeat=res['data']['playChannel']['playbackInfo']['heartbeat'])
 
 # Пускане на евент от миналото
 def catchupEvent(args):
@@ -272,9 +274,12 @@ def catchupEvent(args):
     res = client.execute(open(resources_path + '/catchupEvent.graphql').read(), variables)
     xbmcaddon.Addon(id='plugin.video.mtelnow').setSetting('settings_playback_session_id', res['data']['catchupEvent']['playbackInfo']['sessionId'])
     StartOffset=0
-    if 'event' in res['data']['catchupEvent']['playbackInfo'] and 'startOverTVBeforeTime' in res['data']['catchupEvent']['playbackInfo']['event']:
+    if 'event' in res['data']['catchupEvent']['playbackInfo'] and \
+        'startOverTVBeforeTime' in res['data']['catchupEvent']['playbackInfo']['event']:
         StartOffset = res['data']['catchupEvent']['playbackInfo']['event']['startOverTVBeforeTime']
-    playPath(res['data']['catchupEvent']['playbackInfo']['url'], StartOffset=StartOffset)
+    playPath(res['data']['catchupEvent']['playbackInfo']['url'], 
+                StartOffset=StartOffset, 
+                heartbeat=res['data']['catchupEvent']['playbackInfo']['heartbeat'])
      
 # За теб секцията. Не е довършена, защото няма play
 def indexVOD():
@@ -319,7 +324,7 @@ def indexVODFolder(args):
                 plot=plot
         )
 
-def playPath(path, title = "", plot="", StartOffset=0):
+def playPath(path, title = "", plot="", StartOffset=0, heartbeat=None):
     play_prefix = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('play_prefix')
     if xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('play_prefix_enabled') == "true" and play_prefix:
         path=play_prefix.rstrip('/') + '/' + path
@@ -351,9 +356,46 @@ def playPath(path, title = "", plot="", StartOffset=0):
         try:
             #xbmc.Player().play(path, li)
             xbmcplugin.setResolvedUrl(int(sys.argv[1]), True, li)
+            if heartbeat:
+                startHeartBeat(playPath=path, heartbeat=heartbeat)
         except:
             xbmc.executebuiltin("Notification('Грешка','Видеото липсва на сървъра!')")
- 
+
+def startHeartBeat(playPath, heartbeat):
+    interval = int(heartbeat['interval'])
+    url = heartbeat['url']
+    #includeAuthHeaders = heartbeat['includeAuthHeaders']
+    monitor = xbmc.Monitor()
+    i = 0
+    last_time = int(time.time())
+    # wait for playback to start max 1min else abort
+    while not xbmc.Player().isPlayingVideo() and not monitor.abortRequested():
+        i += 1
+        if i > 60:
+            return False
+        if monitor.waitForAbort(1):
+            return False
+    debug('Start HeartBeat')    
+    while xbmc.Player().isPlayingVideo() and playPath == xbmc.Player().getPlayingFile() and not monitor.abortRequested():
+        if monitor.waitForAbort(0.3):
+            debug('HeartBeat aborted')
+            break
+        if int(time.time()) - last_time > interval - 235:
+            debug('Send heartbeat %s for %s ' % (url, playPath))
+            try:
+                if PY2:
+                    req = urllib2.Request(url, data=None, headers=headers)
+                    f = urllib2.urlopen(req)
+                else:
+                    req = urllib.request.Request(url, method='GET', headers=headers)
+                    f = urllib.request.urlopen(req)
+            except:
+                debug(traceback.format_exc())
+            debug(f.code)
+            last_time = int(time.time())
+    debug('Stop HeartBeat')
+    return True
+
 # Моята секция / Любими
 def indexMyLibrary():
     variables = {"profileId": profile_id,
