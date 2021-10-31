@@ -4,8 +4,6 @@ import sys
 __all__ = ['PY2']
 PY2 = sys.version_info[0] == 2
 
-#import os
-
 if PY2:
     import urlparse
     import urllib
@@ -26,7 +24,7 @@ else:
 
 # Променливи предавани, чрез параметри
 profile_id = int(args.get('profile_id',[0])[0])
-timeout = int(args.get('timeout',[0])[0])
+timeout = data.getSetting('timeout', 0)
 
 this_plugin = xbmcaddon.Addon().getAddonInfo('path') + '/actions.py'
 resources_path = xbmcaddon.Addon().getAddonInfo('path') + '/resources'
@@ -106,10 +104,10 @@ if not user_id or not session_id or reauth:
         # Ако сме се аутентикирали успешно си записваме в settings user_id и session_id
         if user_id != str(responce['user_id']):
             user_id = str(responce['user_id'])
-            xbmcaddon.Addon(id='plugin.video.mtelnow').setSetting('settings_user_id', user_id)
+            data.setSetting('user_id', user_id)
         if session_id != responce['token']:
             session_id = responce['token']
-            xbmcaddon.Addon(id='plugin.video.mtelnow').setSetting('settings_session_id', session_id)
+            data.setSetting('session_id', session_id)
 
 # Изграждаме си нов клиент за GraphQL
 headers = {'SDSEVO_USER_ID': user_id,
@@ -123,6 +121,7 @@ if int(time.time()) > timeout:
     res = client.execute(open(resources_path + '/keepAlive.graphql').read())
     if 'keepSessionAlive' in res['data'] and 'sessionTimeout' in res['data']['keepSessionAlive']:
         timeout = int(time.time()) + res['data']['keepSessionAlive']['sessionTimeout']
+        data.setSetting('timeout', timeout)
 
 # Взимаме profile_id, ако го нямаме
 if not profile_id:
@@ -249,28 +248,34 @@ def indexChannelGuide(args):
 def PlayChannel(args):
     channel_id = args.get('channel_id')[0]
 
-    playback_session_id = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('settings_playback_session_id')
+    playback_session_id = data.getSetting('playback_session_id')
     if playback_session_id:
-        variables = {"input": {"sessionId": playback_session_id}}
-        client.execute(open(resources_path + '/stopPlayback.graphql').read(), variables=variables)
+        try:
+            variables = {"input": {"sessionId": playback_session_id}}
+            client.execute(open(resources_path + '/stopPlayback.graphql').read(), variables=variables)
+        except Exception as e:
+            debug(e)
 
     variables = {"input": {"channelId": channel_id, "replaceSessionId": None}}
     res = client.execute(open(resources_path + '/playChannel.graphql').read(), variables)
-    xbmcaddon.Addon(id='plugin.video.mtelnow').setSetting('settings_playback_session_id', res['data']['playChannel']['playbackInfo']['sessionId'])
+    data.setSetting('playback_session_id', res['data']['playChannel']['playbackInfo']['sessionId'])
     playPath(res['data']['playChannel']['playbackInfo']['url'])
 
 # Пускане на евент от миналото
 def catchupEvent(args):
     event_id = args.get('event_id')[0]
 
-    playback_session_id = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('settings_playback_session_id')
+    playback_session_id = data.getSetting('playback_session_id')
     if playback_session_id:
-        variables = {"input": {"sessionId": playback_session_id}}
-        client.execute(open(resources_path + '/stopPlayback.graphql').read(), variables=variables)
+        try:
+            variables = {"input": {"sessionId": playback_session_id}}
+            client.execute(open(resources_path + '/stopPlayback.graphql').read(), variables=variables)
+        except Exception as e:
+            debug(e)
 
     variables = {"input": {"eventId": event_id, "replaceSessionId": None}}
     res = client.execute(open(resources_path + '/catchupEvent.graphql').read(), variables)
-    xbmcaddon.Addon(id='plugin.video.mtelnow').setSetting('settings_playback_session_id', res['data']['catchupEvent']['playbackInfo']['sessionId'])
+    data.setSetting('playback_session_id', res['data']['catchupEvent']['playbackInfo']['sessionId'])
     StartOffset=0
     if 'event' in res['data']['catchupEvent']['playbackInfo'] and 'startOverTVBeforeTime' in res['data']['catchupEvent']['playbackInfo']['event']:
         StartOffset = res['data']['catchupEvent']['playbackInfo']['event']['startOverTVBeforeTime']
@@ -402,7 +407,7 @@ def indexMyLibrary():
 
 #Модул за добавяне на отделно заглавие и неговите атрибути към съдържанието на показваната в Kodi директория
 def addLink(mode, name, iconimage, params={}, fanart="", plot="", context_items = {}, banner="", poster="", isFolder=False, isPlayable=True):
-    query = {'mode': mode, 'profile_id': profile_id, 'timeout': timeout, 'device_id': device_id}
+    query = {'mode': mode, 'profile_id': profile_id}
     if params:
         query.update(params)
     url = build_url(query)

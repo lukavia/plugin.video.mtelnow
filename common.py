@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 PY2 = sys.version_info[0] == 2
-import xbmc, xbmcaddon
+import xbmc, xbmcaddon, xbmcvfs
 import uuid
 if PY2:
     from urllib import urlencode
@@ -17,13 +17,15 @@ from lib.graphqlclient import GraphQLClient
 def debug(obj):
     xbmc.log(json.dumps(obj, indent=2), xbmc.LOGDEBUG)
 
+__addon__ = xbmcaddon.Addon(id='plugin.video.mtelnow')
+datadir = xbmcvfs.translatePath(__addon__.getAddonInfo('profile'))
+debug(datadir)
+
 #Място за дефиниране на константи, които ще се използват няколкократно из отделните модули
-username = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('settings_username')
-password = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('settings_password')
-user_id = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('settings_user_id')
-session_id = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('settings_session_id')
-max_bandwidth = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('settings_max_bandwidth')
-if xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('settings_adult') == "false":
+username = __addon__.getSetting('settings_username')
+password = __addon__.getSetting('settings_password')
+max_bandwidth = __addon__.getSetting('settings_max_bandwidth')
+if __addon__.getSetting('settings_adult') == "false":
     adult_setting = False
 else:
     adult_setting = True
@@ -32,10 +34,42 @@ if PY2:
 else:
     args = urllib.parse.parse_qs(sys.argv[2][1:])
 
+class Data:
+    def __init__(self):
+        if xbmcvfs.exists(datadir + '/data.json'):
+            fp = xbmcvfs.File(datadir + '/data.json')
+            self.data = json.load(fp)
+            fp.close()
+        else:
+            self.data = {}
+    def getSetting(self, id, default=''):
+        if id in self.data:
+            return self.data[id]
+        else:
+            return default
+    def setSetting(self, id, value):
+        if id not in self.data or value != self.data[id]:
+            self.data[id] = value
+            fp = xbmcvfs.File(datadir + '/data.json', 'w')
+            json.dump(self.data, fp, indent="\t")
+            fp.close()
+
+data = Data()
+user_id = data.getSetting('user_id')
+if not user_id:
+    data.setSetting('user_id', __addon__.getSetting('settings_user_id'))
+    user_id = data.getSetting('user_id')
+session_id = data.getSetting('session_id')
+if not session_id:
+    data.setSetting('session_id', __addon__.getSetting('settings_session_id'))
+    session_id = data.getSetting('session_id')
+
 # device_id, ще го мъкнем като параметър, че понякога се взима бавно
-device_id = args.get('device_id',[''])[0]
+#device_id = args.get('device_id',[''])[0]
+device_id = data.getSetting('device_id')
 if not device_id:
-    device_id = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('settings_device_id')
+    data.setSetting('device_id', __addon__.getSetting('settings_device_id'))
+    device_id = data.getSetting('device_id')
     if not device_id:
         mac = xbmc.getInfoLabel('Network.MacAddress')
         # Мак-а може да се върне като Busy, ако kodi прави нещо друго, затова пробваме докато успеем
@@ -43,7 +77,7 @@ if not device_id:
             time.sleep(0.5)
             mac = xbmc.getInfoLabel('Network.MacAddress')
         device_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, mac))
-        xbmcaddon.Addon(id='plugin.video.mtelnow').setSetting('settings_device_id', device_id)
+        data.setSetting('device_id', device_id)
 
 # Класс за ползване на GraphQL
 class my_gqlc(GraphQLClient):
