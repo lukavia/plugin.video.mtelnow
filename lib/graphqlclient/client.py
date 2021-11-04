@@ -1,9 +1,14 @@
-from lib.six.moves import urllib
+#from lib.six.moves import urllib
+import requests
 import json
 
 class GraphQLClient:
-    def __init__(self, endpoint):
+    def __init__(self, endpoint, session = None):
         self.endpoint = endpoint
+        self.session = session
+        if session is None:
+            self.session = requests.Session()
+            
 
     def execute(self, query, variables=None, headers={}):
         return self._send(query, variables, headers)
@@ -14,12 +19,10 @@ class GraphQLClient:
         headers['Accept'] = 'application/json'
         headers['Content-Type'] = 'application/json'
 
-        req = urllib.request.Request(self.endpoint, json.dumps(data).encode('utf-8'), headers=headers)
-
         try:
-            response = urllib.request.urlopen(req)
-            return json.loads(response.read().decode('utf-8'))
-        except urllib.error.HTTPError as e:
+            req = self.session.post(url = self.endpoint, data = json.dumps(data).encode('utf-8'), headers=headers)
+            return req.json()
+        except HTTPError as e:
             print((e.read()))
             print('')
             raise e

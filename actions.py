@@ -6,7 +6,7 @@ headers = {'SDSEVO_USER_ID': user_id,
            'SDSEVO_DEVICE_ID': device_id,
            'SDSEVO_SESSION_ID': session_id,
 }
-client = my_gqlc(headers)
+client = my_gqlc(headers=headers, session=session)
 
 if sys.argv[1] == 'favoriteItem':
     profile_id = int(sys.argv[2])

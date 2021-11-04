@@ -4,11 +4,7 @@ import sys
 __all__ = ['PY2']
 PY2 = sys.version_info[0] == 2
 
-if PY2:
-    import urlparse
-    import urllib
-else:
-    import urllib.parse
+from lib.six.moves import urllib
 import xbmc, xbmcplugin, xbmcgui, xbmcaddon
 import base64
 import inputstreamhelper
@@ -17,10 +13,7 @@ import time
 
 base_url = sys.argv[0]
 addon_handle = int(sys.argv[1])
-if PY2:
-    args = urlparse.parse_qs(sys.argv[2][1:])
-else:
-    args = urllib.parse.parse_qs(sys.argv[2][1:])
+args = urllib.parse.parse_qs(sys.argv[2][1:])
 
 # Променливи предавани, чрез параметри
 profile_id = int(args.get('profile_id',[0])[0])
@@ -32,8 +25,6 @@ resources_path = xbmcaddon.Addon().getAddonInfo('path') + '/resources'
 #xbmcplugin.setContent(addon_handle, 'movies')
 
 def build_url(query):
-    if PY2:
-        return base_url + '?' + urllib.urlencode(query)
     return base_url + '?' + urllib.parse.urlencode(query)
 
 if not username or not password or not xbmcaddon.Addon():
@@ -69,7 +60,7 @@ if not user_id or not session_id or reauth:
                    'SDSEVO_DEVICE_ID': device_id,
                    'SDSEVO_SESSION_ID': responce['token'],
         }
-        client = my_gqlc(headers)
+        client = my_gqlc(headers=headers, session=session)
         res = client.execute(open(resources_path + '/createDevice.graphql').read(), variables={
             'input':{
                 'clientGeneratedDeviceId': device_id,
@@ -114,7 +105,7 @@ headers = {'SDSEVO_USER_ID': user_id,
            'SDSEVO_DEVICE_ID': device_id,
            'SDSEVO_SESSION_ID': session_id,
 }
-client = my_gqlc(headers)
+client = my_gqlc(headers=headers, session=session)
 
 # ако ни е дошло време си подновяваме сесията
 if int(time.time()) > timeout:
@@ -423,7 +414,7 @@ def addLink(mode, name, iconimage, params={}, fanart="", plot="", context_items 
     if context_items:
         pre_items = []
         for item in context_items:
-            pre_items.append((item, "XBMC.RunScript(" + this_plugin + ", " + context_items[item] + ")"))
+            pre_items.append((item, "RunScript(" + this_plugin + ", " + context_items[item] + ")"))
         li.addContextMenuItems(pre_items)
     return xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=li, isFolder=isFolder)
 

@@ -1,25 +1,19 @@
 # -*- coding: utf-8 -*-
 import sys
-PY2 = sys.version_info[0] == 2
 import xbmc, xbmcaddon, xbmcvfs
 import uuid
-if PY2:
-    from urllib import urlencode
-    import urllib2
-    import urlparse
-else:
-    import urllib.request
-    import urllib.parse
 import datetime, time, pytz
 import json
 from lib.graphqlclient import GraphQLClient
+from lib.six.moves import urllib
+import requests
+from http.cookiejar import LWPCookieJar
 
 def debug(obj):
     xbmc.log(json.dumps(obj, indent=2), xbmc.LOGDEBUG)
 
 __addon__ = xbmcaddon.Addon(id='plugin.video.mtelnow')
 datadir = xbmcvfs.translatePath(__addon__.getAddonInfo('profile'))
-debug(datadir)
 
 #Място за дефиниране на константи, които ще се използват няколкократно из отделните модули
 username = __addon__.getSetting('settings_username')
@@ -29,11 +23,13 @@ if __addon__.getSetting('settings_adult') == "false":
     adult_setting = False
 else:
     adult_setting = True
-if PY2:
-    args = urlparse.parse_qs(sys.argv[2][1:])
-else:
-    args = urllib.parse.parse_qs(sys.argv[2][1:])
+args = urllib.parse.parse_qs(sys.argv[2][1:])
 
+session = requests.Session()
+cookiejar = datadir + '/cookiejar'
+session.cookies = LWPCookieJar(cookiejar)
+if xbmcvfs.exists(cookiejar):
+    session.cookies.load(ignore_discard=True)
 class Data:
     def __init__(self):
         if xbmcvfs.exists(datadir + '/data.json'):
@@ -81,14 +77,16 @@ if not device_id:
 
 # Класс за ползване на GraphQL
 class my_gqlc(GraphQLClient):
-    def __init__(self, headers):
+    def __init__(self, headers, session = None):
         self.endpoint = 'https://web.a1xploretv.bg:8443/sdsmiddleware/Mtel/graphql/4.0'
         self.headers = headers
+        self.session = session
     def execute(self, query, variables=None):
         debug(self.headers)
         debug(query.partition('\n')[0])
         res = self._send(query, variables, self.headers)
         debug(res)
+        self.session.cookies.save(ignore_discard=True)
         return res
 
 def to_datetime(instr):
@@ -101,19 +99,11 @@ def request(action, params={}, method='POST'):
     data.update(params)
     debug(action)
     debug(data)
-    if PY2:
-        tmp = ''
-        if method == 'GET':
-            tmp = None
-        req = urllib2.Request(endpoint + action + '?%s' % urlencode(data), data=tmp)
+    if method == 'POST':
+        req = session.post(url = endpoint + action + '?%s' % urllib.parse.urlencode(data), headers = {'Content-Type':'application/json'})
     else:
-        req = urllib.request.Request(endpoint + action + '?%s' % urllib.parse.urlencode(data), method=method)
-    req.add_header('Content-Type', 'application/json')
-    if PY2:
-        f = urllib2.urlopen(req)
-    else:
-        f = urllib.request.urlopen(req)
-    responce = f.read()
-    json_responce = json.loads(responce)
+        req = session.get(url = endpoint + action + '?%s' % urllib.parse.urlencode(data), headers = {'Content-Type':'application/json'})
+    json_responce = req.json()
+    session.cookies.save(ignore_discard=True)
     debug(json_responce)
     return json_responce
