@@ -87,6 +87,9 @@ class my_gqlc(GraphQLClient):
         res = self._send(query, variables, self.headers)
         debug(res)
         self.session.cookies.save(ignore_discard=True)
+        if 'errors' in res:
+            for error in res['errors']:
+                raise Exception(error['message'])
         return res
 
 def to_datetime(instr):

@@ -246,11 +246,13 @@ def PlayChannel(args):
             client.execute(open(resources_path + '/stopPlayback.graphql').read(), variables=variables)
         except Exception as e:
             debug(e)
-
-    variables = {"input": {"channelId": channel_id, "replaceSessionId": None}}
-    res = client.execute(open(resources_path + '/playChannel.graphql').read(), variables)
-    data.setSetting('playback_session_id', res['data']['playChannel']['playbackInfo']['sessionId'])
-    playPath(res['data']['playChannel']['playbackInfo']['url'])
+    try:
+        variables = {"input": {"channelId": channel_id, "replaceSessionId": None}}
+        res = client.execute(open(resources_path + '/playChannel.graphql').read(), variables)
+        data.setSetting('playback_session_id', res['data']['playChannel']['playbackInfo']['sessionId'])
+        playPath(res['data']['playChannel']['playbackInfo']['url'])
+    except Exception as e:
+        xbmcgui.Dialog().ok('Проблем', str(e))
 
 # Пускане на евент от миналото
 def catchupEvent(args):
@@ -264,13 +266,16 @@ def catchupEvent(args):
         except Exception as e:
             debug(e)
 
-    variables = {"input": {"eventId": event_id, "replaceSessionId": None}}
-    res = client.execute(open(resources_path + '/catchupEvent.graphql').read(), variables)
-    data.setSetting('playback_session_id', res['data']['catchupEvent']['playbackInfo']['sessionId'])
-    StartOffset=0
-    if 'event' in res['data']['catchupEvent']['playbackInfo'] and 'startOverTVBeforeTime' in res['data']['catchupEvent']['playbackInfo']['event']:
-        StartOffset = res['data']['catchupEvent']['playbackInfo']['event']['startOverTVBeforeTime']
-    playPath(res['data']['catchupEvent']['playbackInfo']['url'], StartOffset=StartOffset)
+    try:
+        variables = {"input": {"eventId": event_id, "replaceSessionId": None}}
+        res = client.execute(open(resources_path + '/catchupEvent.graphql').read(), variables)
+        data.setSetting('playback_session_id', res['data']['catchupEvent']['playbackInfo']['sessionId'])
+        StartOffset=0
+        if 'event' in res['data']['catchupEvent']['playbackInfo'] and 'startOverTVBeforeTime' in res['data']['catchupEvent']['playbackInfo']['event']:
+            StartOffset = res['data']['catchupEvent']['playbackInfo']['event']['startOverTVBeforeTime']
+        playPath(res['data']['catchupEvent']['playbackInfo']['url'], StartOffset=StartOffset)
+    except Exception as e:
+        xbmcgui.Dialog().ok('Проблем', str(e))
      
 # За теб секцията. Не е довършена, защото няма play
 def indexVOD():
