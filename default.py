@@ -245,7 +245,7 @@ def PlayChannel(args):
             variables = {"input": {"sessionId": playback_session_id}}
             client.execute(open(resources_path + '/stopPlayback.graphql').read(), variables=variables)
         except Exception as e:
-            debug(e)
+            xbmc.log(str(e), xbmc.LOGDEBUG)
     try:
         variables = {"input": {"channelId": channel_id, "replaceSessionId": None}}
         res = client.execute(open(resources_path + '/playChannel.graphql').read(), variables)
@@ -264,7 +264,7 @@ def catchupEvent(args):
             variables = {"input": {"sessionId": playback_session_id}}
             client.execute(open(resources_path + '/stopPlayback.graphql').read(), variables=variables)
         except Exception as e:
-            debug(e)
+            xbmc.log(str(e), xbmc.LOGDEBUG)
 
     try:
         variables = {"input": {"eventId": event_id, "replaceSessionId": None}}
