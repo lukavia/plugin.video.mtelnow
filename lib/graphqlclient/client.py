@@ -22,7 +22,5 @@ class GraphQLClient:
         try:
             req = self.session.post(url = self.endpoint, data = json.dumps(data).encode('utf-8'), headers=headers)
             return req.json()
-        except HTTPError as e:
-            print((e.read()))
-            print('')
+        except Exception as e:
             raise e
