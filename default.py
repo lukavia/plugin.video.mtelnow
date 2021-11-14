@@ -273,7 +273,11 @@ def catchupEvent(args):
         StartOffset=0
         if 'event' in res['data']['catchupEvent']['playbackInfo'] and 'startOverTVBeforeTime' in res['data']['catchupEvent']['playbackInfo']['event']:
             StartOffset = res['data']['catchupEvent']['playbackInfo']['event']['startOverTVBeforeTime']
-        playPath(res['data']['catchupEvent']['playbackInfo']['url'], StartOffset=StartOffset)
+        path = res['data']['catchupEvent']['playbackInfo']['url']
+        play_prefix = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('play_prefix')
+        if xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('play_prefix_enabled') == "true" and play_prefix:
+            path=play_prefix.rstrip('/') + '/' + path
+        playPath(path, StartOffset=StartOffset)
     except Exception as e:
         xbmcgui.Dialog().ok('Проблем', str(e))
      
@@ -321,9 +325,6 @@ def indexVODFolder(args):
         )
 
 def playPath(path, title = "", plot="", StartOffset=0):
-    play_prefix = xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('play_prefix')
-    if xbmcaddon.Addon(id='plugin.video.mtelnow').getSetting('play_prefix_enabled') == "true" and play_prefix:
-        path=play_prefix.rstrip('/') + '/' + path
     PROTOCOL = 'mpd'
     DRM = 'com.widevine.alpha'
 
