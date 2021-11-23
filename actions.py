@@ -2,7 +2,7 @@
 import sys
 from common import *
 
-headers = {'SDSEVO_USER_ID': user_id,
+headers = {'SDSEVO_USER_ID': str(user_id),
            'SDSEVO_DEVICE_ID': device_id,
            'SDSEVO_SESSION_ID': session_id,
 }

@@ -56,7 +56,7 @@ if not user_id or not session_id or reauth:
         if 'error_code' in responce and responce['error_code']:
             xbmcgui.Dialog().ok('Проблем', responce['message'])
         # register
-        headers = {'SDSEVO_USER_ID': responce['user_id'],
+        headers = {'SDSEVO_USER_ID': str(responce['user_id']),
                    'SDSEVO_DEVICE_ID': device_id,
                    'SDSEVO_SESSION_ID': responce['token'],
         }
@@ -101,7 +101,7 @@ if not user_id or not session_id or reauth:
             data.setSetting('session_id', session_id)
 
 # Изграждаме си нов клиент за GraphQL
-headers = {'SDSEVO_USER_ID': user_id,
+headers = {'SDSEVO_USER_ID': str(user_id),
            'SDSEVO_DEVICE_ID': device_id,
            'SDSEVO_SESSION_ID': session_id,
 }
