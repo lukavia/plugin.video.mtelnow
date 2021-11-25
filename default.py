@@ -35,7 +35,7 @@ __all__ = ['PY2']
 
 # Аутентикация
 reauth = False
-if int(user_id) and session_id and int(time.time()) > timeout:
+if user_id and session_id and int(time.time()) > timeout:
     responce = request('CheckToken', {'devId': device_id, 'token': session_id, 'apply': 'true'}, method='GET')
     if 'error_code' in responce and responce['error_code']:
         # Ако има проблем казваме да се аутентикира наново
