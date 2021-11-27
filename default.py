@@ -49,7 +49,7 @@ if not user_id or not session_id or reauth:
     login_params = {'devId': device_id, 'user': username, 'pwd': password, 'rqT': 'true'} #, 'refr': 'true'}
     responce = request('Login', login_params)
 
-    if 'error_code' in responce and responce['error_code'] == 'errClDevNotFound':
+    if 'error_code' in responce and responce['error_code'] in ['errClDevNotFound', 'errHoushNotEnabled']:
         # Ако устройството не е регистрирано, го регистрираме
         login_params = {'devId': '', 'user': username, 'pwd': password, 'rqT': 'true'}
         responce = request('Login', login_params)
