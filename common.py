@@ -37,7 +37,10 @@ class Data:
     def __init__(self):
         if xbmcvfs.exists(datadir + '/data.json'):
             fp = xbmcvfs.File(datadir + '/data.json')
-            self.data = json.load(fp)
+            try:
+                self.data = json.load(fp)
+            except:
+                self.data = {}
             fp.close()
         else:
             self.data = {}
