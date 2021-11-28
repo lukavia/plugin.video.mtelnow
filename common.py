@@ -7,7 +7,7 @@ import json
 from lib.graphqlclient import GraphQLClient
 from lib.six.moves import urllib
 import requests
-from six.moves.http_cookiejar import LWPCookieJar
+from lib.six.moves.http_cookiejar import LWPCookieJar
 
 def debug(obj):
     xbmc.log(json.dumps(obj, indent=2), xbmc.LOGDEBUG)
