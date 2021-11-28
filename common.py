@@ -7,13 +7,16 @@ import json
 from lib.graphqlclient import GraphQLClient
 from lib.six.moves import urllib
 import requests
-from http.cookiejar import LWPCookieJar
+from six.moves.http_cookiejar import LWPCookieJar
 
 def debug(obj):
     xbmc.log(json.dumps(obj, indent=2), xbmc.LOGDEBUG)
 
 __addon__ = xbmcaddon.Addon(id='plugin.video.mtelnow')
-datadir = xbmcvfs.translatePath(__addon__.getAddonInfo('profile'))
+if 'translatePath' in dir(xbmcvfs):
+    datadir = xbmcvfs.translatePath(__addon__.getAddonInfo('profile'))
+else:
+    datadir = xbmc.translatePath(__addon__.getAddonInfo('profile'))
 
 #Място за дефиниране на константи, които ще се използват няколкократно из отделните модули
 username = __addon__.getSetting('settings_username')
@@ -47,7 +50,7 @@ class Data:
         if id not in self.data or value != self.data[id]:
             self.data[id] = value
             fp = xbmcvfs.File(datadir + '/data.json', 'w')
-            json.dump(self.data, fp, indent="\t")
+            json.dump(self.data, fp, indent=2)
             fp.close()
 
 data = Data()
