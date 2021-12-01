@@ -6,6 +6,7 @@ import datetime, time, pytz
 import json
 from lib.graphqlclient import GraphQLClient
 from lib.six.moves import urllib
+from lib.six import ensure_str
 import requests
 from lib.six.moves.http_cookiejar import LWPCookieJar
 
@@ -95,7 +96,7 @@ class my_gqlc(GraphQLClient):
         self.session.cookies.save(ignore_discard=True)
         if 'errors' in res:
             for error in res['errors']:
-                raise Exception(error['message'])
+                raise Exception(ensure_str(error['message']))
         return res
 
 def to_datetime(instr):
