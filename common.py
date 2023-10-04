@@ -33,7 +33,11 @@ session = requests.Session()
 cookiejar = datadir + '/cookiejar'
 session.cookies = LWPCookieJar(cookiejar)
 if xbmcvfs.exists(cookiejar):
-    session.cookies.load(ignore_discard=True)
+    cookie_file = xbmcvfs.File(cookiejar)
+    cookie_file_size = cookie_file.size()
+    cookie_file.close()
+    if cookie_file_size > 0:
+        session.cookies.load(ignore_discard=True)
 class Data:
     def __init__(self):
         if xbmcvfs.exists(datadir + '/data.json'):
