@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-import xbmc, xbmcaddon, xbmcvfs
+import xbmc, xbmcaddon, xbmcvfs, xbmcgui
 import uuid
 import datetime, time, pytz
 import json
@@ -97,6 +97,7 @@ class my_gqlc(GraphQLClient):
         self.session.cookies.save(ignore_discard=True)
         if 'errors' in res:
             for error in res['errors']:
+                xbmcgui.Dialog().notification('Грешка', ensure_str(error['message']), xbmcgui.NOTIFICATION_ERROR)
                 raise Exception(ensure_str(error['message']))
         return res
 
