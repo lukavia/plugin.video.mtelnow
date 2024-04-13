@@ -75,15 +75,12 @@ if not session_id:
 #device_id = args.get('device_id',[''])[0]
 device_id = data.getSetting('device_id')
 if not device_id:
+    # За backwords съвемстимост проверяваме дали го има е settings
     data.setSetting('device_id', __addon__.getSetting('settings_device_id'))
     device_id = data.getSetting('device_id')
     if not device_id:
-        mac = xbmc.getInfoLabel('Network.MacAddress')
-        # Мак-а може да се върне като Busy, ако kodi прави нещо друго, затова пробваме докато успеем
-        while mac == 'Busy':
-            time.sleep(0.5)
-            mac = xbmc.getInfoLabel('Network.MacAddress')
-        device_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, mac))
+        # Генерираме произволно
+        device_id = str(uuid.uuid4())
         data.setSetting('device_id', device_id)
 
 # Класс за ползване на GraphQL
