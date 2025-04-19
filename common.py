@@ -44,7 +44,8 @@ class Data:
             fp = xbmcvfs.File(datadir + '/data.json')
             try:
                 self.data = json.load(fp)
-            except:
+            except Exception as e:
+                xbmc.log('Failed to load data.json: ' + str(e), xbmc.LOGDEBUG)
                 self.data = {}
             fp.close()
         else:
