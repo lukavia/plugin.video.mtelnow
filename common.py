@@ -59,7 +59,7 @@ class Data:
         if id not in self.data or value != self.data[id]:
             self.data[id] = value
             fp = xbmcvfs.File(datadir + '/data.json', 'w')
-            json.dump(self.data, fp, indent=2)
+            json.dump(self.data, fp)
             fp.close()
 
 data = Data()
